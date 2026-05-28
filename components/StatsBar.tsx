@@ -15,6 +15,7 @@ export function StatsBar() {
         <div className="relative w-14 h-14 flex-shrink-0">
           <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
             <circle cx="28" cy="28" r="22" fill="none" stroke="currentColor" strokeWidth="6" className="text-gray-200 dark:text-gray-700" />
+            {/* strokeDasharray = full circumference (2πr); offset shrinks it to the filled arc. */}
             <motion.circle
               cx="28" cy="28" r="22"
               fill="none"

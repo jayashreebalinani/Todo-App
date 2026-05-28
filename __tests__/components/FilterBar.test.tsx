@@ -27,9 +27,9 @@ describe("FilterBar", () => {
     expect(screen.getByText("Completed")).toBeInTheDocument();
   });
 
-  it("renders user dropdown", () => {
+  it("renders user filter", () => {
     renderWithProvider(<FilterBar />);
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(screen.getByText("All users")).toBeInTheDocument();
   });
 
   it("shows clear button when search has value", () => {

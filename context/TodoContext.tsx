@@ -29,7 +29,7 @@ interface TodoContextType {
   toggleSelect: (id: number) => void;
   selectAll: () => void;
   clearSelection: () => void;
-  reorderTodos: (from: number, to: number) => void;
+  reorderTodos: (fromId: number, toId: number) => void;
   filteredTodos: Todo[];
   stats: { total: number; completed: number; pending: number };
 }
@@ -42,7 +42,9 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFiltersState] = useState<Filters>({
     search: "",
     status: "all",
-    userId: null,
+    userIds: [],
+    dateFrom: null,
+    dateTo: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -52,7 +54,17 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     Promise.all([api.getTodos(), api.getUsers()])
       .then(([todosData, usersData]) => {
-        setTodos(todosData);
+        const now = Date.now();
+        const MS_PER_DAY = 86_400_000;
+        // Deterministic formula: same todo always lands on the same date across reloads,
+        // so the date-range filter produces consistent results without randomness.
+        const withDates = todosData.map((todo) => ({
+          ...todo,
+          createdAt: new Date(now - (todo.id % 60) * MS_PER_DAY)
+            .toISOString()
+            .slice(0, 10),
+        }));
+        setTodos(withDates);
         setUsers(usersData);
       })
       .catch((e) => setError(e.message))
@@ -72,7 +84,12 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
         return false;
       if (filters.status === "completed" && !t.completed) return false;
       if (filters.status === "pending" && t.completed) return false;
-      if (filters.userId !== null && t.userId !== filters.userId) return false;
+      if (filters.userIds.length > 0 && !filters.userIds.includes(t.userId))
+        return false;
+      if (filters.dateFrom && t.createdAt && t.createdAt < filters.dateFrom)
+        return false;
+      if (filters.dateTo && t.createdAt && t.createdAt > filters.dateTo)
+        return false;
       return true;
     });
   }, [todos, filters]);
@@ -86,10 +103,8 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     setIsCreating(true);
     try {
       const created = await api.createTodo(payload);
-      // JSONPlaceholder returns id=201 always; use a unique local id
-      const newId = Date.now();
       setTodos((prev) => [
-        { ...created, id: newId, _isNew: true },
+        { ...created, _isNew: true, createdAt: new Date().toISOString().slice(0, 10) },
         ...prev,
       ]);
     } finally {
@@ -105,7 +120,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       const todo = todos.find((t) => t.id === id)!;
       await api.updateTodo({ ...todo, completed: !todo.completed });
     } catch {
-      // revert on failure
+      // Optimistic update: flip back to original state before surfacing the error.
       setTodos((prev) =>
         prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
       );
@@ -175,11 +190,14 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
-  const reorderTodos = useCallback((from: number, to: number) => {
+  const reorderTodos = useCallback((fromId: number, toId: number) => {
     setTodos((prev) => {
+      const fromIndex = prev.findIndex((t) => t.id === fromId);
+      const toIndex = prev.findIndex((t) => t.id === toId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
       const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
       return next;
     });
   }, []);

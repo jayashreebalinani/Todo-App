@@ -14,7 +14,7 @@ async function request<T>(
   if (!res.ok) {
     throw new Error(`API error ${res.status}: ${res.statusText}`);
   }
-  // DELETE returns empty body
+  // JSONPlaceholder returns 200 OK with an empty body for DELETE; calling res.json() would throw.
   if (res.status === 200 && options?.method === "DELETE") return {} as T;
   return res.json();
 }

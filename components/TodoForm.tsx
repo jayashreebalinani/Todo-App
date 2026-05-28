@@ -47,6 +47,8 @@ export function TodoForm() {
         whileTap={{ scale: 0.98 }}
         onClick={() => {
           setOpen(!open);
+          // Defer focus until after Framer Motion's enter animation starts; focusing
+          // before the element is visible produces no visible caret in some browsers.
           setTimeout(() => inputRef.current?.focus(), 100);
         }}
         className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow text-sm"

@@ -27,7 +27,9 @@ export function TodoList() {
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    reorderTodos(result.source.index, result.destination.index);
+    const fromId = paginated[result.source.index].id;
+    const toId = paginated[result.destination.index].id;
+    reorderTodos(fromId, toId);
   };
 
   if (isLoading) return <SkeletonLoader />;

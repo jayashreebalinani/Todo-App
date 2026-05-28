@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, memo } from "react";
 import { motion } from "framer-motion";
 import { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 import { useTodoContext } from "@/context/TodoContext";
-import { UserHoverCard } from "./UserHoverCard";
+
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { Todo } from "@/types";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const TodoItem = memo(function TodoItem({ todo, dragHandleProps, index }: Props) {
-  const { users, todos, toggleTodo, updateTitle, deleteTodo, toggleSelect, selectedIds } =
+  const { users, toggleTodo, updateTitle, deleteTodo, toggleSelect, selectedIds } =
     useTodoContext();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -78,7 +78,6 @@ export const TodoItem = memo(function TodoItem({ todo, dragHandleProps, index }:
   return (
     <>
       <motion.div
-        layout
         initial={todo._isNew ? { opacity: 0, y: -16, scale: 0.97 } : false}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, x: -20, scale: 0.97 }}
@@ -92,7 +91,7 @@ export const TodoItem = memo(function TodoItem({ todo, dragHandleProps, index }:
         {/* Drag handle */}
         <div
           {...dragHandleProps}
-          className="mt-0.5 text-gray-300 dark:text-gray-600 hover:text-gray-400 dark:hover:text-gray-400 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          className="mt-0.5 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M9 5a1 1 0 100-2 1 1 0 000 2zm6 0a1 1 0 100-2 1 1 0 000 2zM9 11a1 1 0 100-2 1 1 0 000 2zm6 0a1 1 0 100-2 1 1 0 000 2zM9 17a1 1 0 100-2 1 1 0 000 2zm6 0a1 1 0 100-2 1 1 0 000 2z" />
@@ -163,11 +162,18 @@ export const TodoItem = memo(function TodoItem({ todo, dragHandleProps, index }:
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-xs text-gray-400 dark:text-gray-500">#{todo.id}</span>
             {user && (
-              <UserHoverCard user={user} todos={todos}>
-                <span className="text-xs text-violet-500 dark:text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 cursor-pointer font-medium">
-                  @{user.username}
-                </span>
-              </UserHoverCard>
+              <span className="text-xs text-violet-500 dark:text-violet-400 font-medium">
+                {user.name} @({user.username})
+              </span>
+            )}
+            {todo.createdAt && (
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {new Date(todo.createdAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
             )}
             <span
               className={`text-xs px-2 py-0.5 rounded-full font-medium ${

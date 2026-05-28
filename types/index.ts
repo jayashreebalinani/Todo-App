@@ -4,6 +4,7 @@ export interface Todo {
   title: string;
   completed: boolean;
   // local-only fields
+  createdAt?: string; // YYYY-MM-DD, generated client-side
   _isNew?: boolean;
   _optimisticId?: number;
 }
@@ -30,7 +31,9 @@ export type FilterStatus = "all" | "completed" | "pending";
 export interface Filters {
   search: string;
   status: FilterStatus;
-  userId: number | null;
+  userIds: number[];
+  dateFrom: string | null;
+  dateTo: string | null;
 }
 
 export interface CreateTodoPayload {
