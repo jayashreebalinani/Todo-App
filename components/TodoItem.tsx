@@ -16,14 +16,20 @@ interface Props {
 }
 
 export const TodoItem = memo(function TodoItem({ todo, dragHandleProps, index }: Props) {
-  const { users, toggleTodo, updateTitle, deleteTodo, toggleSelect, selectedIds } =
+  const { users, toggleTodo, updateTitle, deleteTodo, toggleSelect, selectedIds, setDueDate } =
     useTodoContext();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(todo.title);
   const [isToggling, setIsToggling] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [editingDueDate, setEditingDueDate] = useState(false);
   const editRef = useRef<HTMLInputElement>(null);
+  const dueDateRef = useRef<HTMLInputElement>(null);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const isOverdue = todo.dueDate && todo.dueDate < today && !todo.completed;
+  const isDueToday = todo.dueDate === today;
 
   const user = users.find((u) => u.id === todo.userId);
   const isSelected = selectedIds.has(todo.id);
@@ -184,6 +190,42 @@ export const TodoItem = memo(function TodoItem({ todo, dragHandleProps, index }:
             >
               {todo.completed ? "Done" : "Pending"}
             </span>
+            {/* Due date badge */}
+            {editingDueDate ? (
+              <input
+                ref={dueDateRef}
+                type="date"
+                defaultValue={todo.dueDate ?? ""}
+                autoFocus
+                onBlur={(e) => {
+                  setDueDate(todo.id, e.target.value || null);
+                  setEditingDueDate(false);
+                }}
+                onChange={(e) => {
+                  setDueDate(todo.id, e.target.value || null);
+                  setEditingDueDate(false);
+                }}
+                className="text-xs px-2 py-0.5 rounded-lg border border-violet-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-violet-400"
+              />
+            ) : todo.dueDate ? (
+              <button
+                onClick={() => setEditingDueDate(true)}
+                title="Change due date"
+                className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
+                  isOverdue
+                    ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                    : isDueToday
+                    ? "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+                    : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                }`}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {isOverdue ? "Overdue · " : isDueToday ? "Today · " : ""}
+                {new Date(todo.dueDate + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+              </button>
+            ) : null}
           </div>
         </div>
 

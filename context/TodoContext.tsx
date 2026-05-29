@@ -30,6 +30,7 @@ interface TodoContextType {
   selectAll: () => void;
   clearSelection: () => void;
   reorderTodos: (fromId: number, toId: number) => void;
+  setDueDate: (id: number, dueDate: string | null) => void;
   filteredTodos: Todo[];
   stats: { total: number; completed: number; pending: number };
 }
@@ -58,12 +59,22 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
         const MS_PER_DAY = 86_400_000;
         // Deterministic formula: same todo always lands on the same date across reloads,
         // so the date-range filter produces consistent results without randomness.
-        const withDates = todosData.map((todo) => ({
-          ...todo,
-          createdAt: new Date(now - (todo.id % 60) * MS_PER_DAY)
-            .toISOString()
-            .slice(0, 10),
-        }));
+        // Due date offsets (in days from today): null=no date, -2=overdue, 0=today, 1=tomorrow, 3=this week, 10=later
+        const DUE_OFFSETS: (number | null)[] = [null, -2, 0, 0, 1, 3, 10];
+        const withDates = todosData.map((todo) => {
+          const offset = DUE_OFFSETS[todo.id % 7];
+          const dueDate =
+            offset !== null
+              ? new Date(now + offset * MS_PER_DAY).toISOString().slice(0, 10)
+              : null;
+          return {
+            ...todo,
+            createdAt: new Date(now - (todo.id % 60) * MS_PER_DAY)
+              .toISOString()
+              .slice(0, 10),
+            dueDate,
+          };
+        });
         setTodos(withDates);
         setUsers(usersData);
       })
@@ -190,6 +201,12 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
+  const setDueDate = useCallback((id: number, dueDate: string | null) => {
+    setTodos((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, dueDate } : t))
+    );
+  }, []);
+
   const reorderTodos = useCallback((fromId: number, toId: number) => {
     setTodos((prev) => {
       const fromIndex = prev.findIndex((t) => t.id === fromId);
@@ -223,6 +240,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
         selectAll,
         clearSelection,
         reorderTodos,
+        setDueDate,
         filteredTodos,
         stats,
       }}

@@ -5,6 +5,7 @@ export interface Todo {
   completed: boolean;
   // local-only fields
   createdAt?: string; // YYYY-MM-DD, generated client-side
+  dueDate?: string | null; // YYYY-MM-DD, assignable by user
   _isNew?: boolean;
   _optimisticId?: number;
 }
