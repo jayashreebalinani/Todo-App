@@ -1,7 +1,9 @@
 import { Todo, User, CreateTodoPayload, UpdateTodoPayload } from "@/types";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://jsonplaceholder.typicode.com";
+// Use local API proxy so all requests go to the Next.js server (works on any
+// device on the LAN without requiring the mobile browser to reach an external host).
+// Falls back to the full upstream URL if the env variable overrides it.
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 async function request<T>(
   path: string,
